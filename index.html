@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Analyse d'un colorant alimentaire vert par chromatographie sur couche mince (CCM)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f6f8; --panel:#ffffff; --ink:#1d2733; --muted:#5d6b79; --line:#dde3ea;
+    --accent:#2b6cb0; --accent-d:#1f4f86; --ok:#2f855a;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,sans-serif}
+  header{padding:18px 24px 6px;text-align:center}
+  header h1{margin:0;font-size:22px;font-weight:700}
+  header p{margin:4px 0 0;color:var(--muted);font-size:14px}
+  .wrap{display:flex;gap:20px;padding:14px 24px 24px;align-items:flex-start}
+  .panel{width:300px;flex:none;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 16px 18px;position:sticky;top:12px}
+  .stage{flex:1;min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px}
+  svg#scene{width:100%;height:auto;display:block;max-height:calc(100vh - 120px)}
+  .info{font-size:13.5px;color:var(--ink);background:#f7f9fb;border:1px solid var(--line);border-radius:10px;padding:9px 12px;margin-bottom:12px;line-height:1.6}
+  .step{border-radius:10px;padding:12px;margin-bottom:12px;border:1px solid var(--line);transition:opacity .3s}
+  .step.off{opacity:.45;pointer-events:none}
+  .step h2{margin:0 0 10px;font-size:15px;display:flex;align-items:center;gap:8px}
+  .num{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-size:12px}
+  .sub{font-size:13px;font-weight:600;color:var(--muted);margin:2px 0 8px}
+  ul#deps{list-style:none;margin:0 0 8px;padding:0;display:flex;flex-direction:column;gap:6px}
+  ul#deps li{display:flex;align-items:center;gap:8px;font-size:13.5px;background:#f7f9fb;border:1px solid var(--line);border-radius:8px;padding:6px 8px}
+  .dot{width:12px;height:12px;border-radius:50%;flex:none;box-shadow:inset 0 0 0 1px rgba(0,0,0,.15)}
+  ul#deps li .nm{flex:1}
+  ul#deps li button{border:0;background:none;color:#a0aab4;font-size:17px;cursor:pointer;line-height:1;padding:0 2px}
+  ul#deps li button:hover{color:#c53030}
+  .adder{position:relative;display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .adder .sub{margin:0}
+  #plus{width:32px;height:32px;flex:none;border-radius:50%;border:2px dashed var(--accent);background:#fff;color:var(--accent);font-size:22px;font-weight:600;cursor:pointer;line-height:1}
+  #plus:hover{background:#ebf4ff}
+  #menu{position:absolute;left:0;top:calc(100% + 4px);z-index:5;width:100%;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px rgba(20,40,60,.15);padding:4px}
+  #menu button{display:flex;width:100%;align-items:center;gap:8px;border:0;background:none;text-align:left;padding:8px 8px;border-radius:7px;font:inherit;font-size:13.5px;cursor:pointer;color:var(--ink)}
+  #menu button:hover:not(:disabled){background:#ebf4ff}
+  #menu button:disabled{color:#b5bec7;cursor:not-allowed}
+  #menu .mhead{font-size:12px;color:var(--muted);padding:6px 8px 4px}
+  .btn{display:block;width:100%;margin-top:10px;padding:10px 12px;border-radius:9px;border:0;background:var(--accent);color:#fff;font:inherit;font-weight:600;font-size:14px;cursor:pointer}
+  .btn:hover:not(:disabled){background:var(--accent-d)}
+  .btn:disabled{background:#b9c6d3;cursor:not-allowed}
+  .btn.ghost{background:#fff;color:var(--accent);border:1px solid var(--accent)}
+  .btn.ghost:hover{background:#ebf4ff}
+  .bar{height:8px;background:#e7edf3;border-radius:6px;overflow:hidden;margin-top:10px}
+  .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#63b3ed,#2b6cb0)}
+  #status{font-size:16px;font-weight:600;color:#1f3b57;text-align:center;min-height:48px;padding:12px 16px 0;line-height:1.4}
+  .hint{font-size:12.5px;color:var(--muted);margin:6px 0 0}
+  @media (max-width:820px){
+    .wrap{flex-direction:column}
+    .panel{width:100%;position:static}
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Analyse d'un colorant alimentaire vert par chromatographie sur couche mince (CCM)</h1>
+</header>
+
+<div class="wrap">
+  <aside class="panel">
+    <div class="info"><div><b>Support :</b> papier Whatman</div><div><b>Éluant :</b> eau / éthanol</div></div>
+    <div class="step" id="step1">
+      <h2><span class="num">1</span>Préparation de la plaque</h2>
+      <ul id="deps"></ul>
+      <div class="adder">
+        <button id="plus" title="Ajouter un dépôt" aria-label="Ajouter un dépôt">+</button>
+        <span class="sub">Ajouter un dépôt</span>
+        <div id="menu" hidden></div>
+      </div>
+      <button class="btn" id="validate" disabled>Valider les dépôts</button>
+    </div>
+
+    <div class="step off" id="step2">
+      <h2><span class="num">2</span>Élution</h2>
+      <p class="hint" style="margin-top:0">La plaque CCM est placée dans une cuve contenant l'éluant eau / éthanol.</p>
+      <button class="btn" id="elute" disabled>Lancer l'élution</button>
+      <div class="bar"><i id="prog"></i></div>
+    </div>
+
+    <button class="btn ghost" id="reset">Recommencer</button>
+  </aside>
+
+  <main class="stage">
+    <div id="status">Clique sur « + » pour choisir les espèces à déposer sur la plaque.</div>
+    <svg id="scene" viewBox="0 0 700 640" xmlns="http://www.w3.org/2000/svg" aria-label="Plaque de CCM">
+      <defs>
+        <filter id="blur" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="2.2"/></filter>
+        <filter id="blurT" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="4"/></filter>
+        <linearGradient id="glass" x1="0" x2="1">
+          <stop offset="0" stop-color="#cfe6f5" stop-opacity=".45"/>
+          <stop offset=".12" stop-color="#ffffff" stop-opacity=".15"/>
+          <stop offset=".85" stop-color="#ffffff" stop-opacity=".08"/>
+          <stop offset="1" stop-color="#cfe6f5" stop-opacity=".45"/>
+        </linearGradient>
+        <linearGradient id="liq" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#9fcbe8" stop-opacity=".55"/>
+          <stop offset="1" stop-color="#6aa9d6" stop-opacity=".7"/>
+        </linearGradient>
+        <linearGradient id="silica" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#fdfdfb"/>
+          <stop offset="1" stop-color="#f5f4ef"/>
+        </linearGradient>
+        <!-- texture fibreuse du papier Whatman -->
+        <filter id="paperTex" x="0" y="0" width="100%" height="100%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.9 0.25" numOctaves="3" seed="7" result="n"/>
+          <feColorMatrix in="n" type="matrix" values="0 0 0 0 0.45  0 0 0 0 0.43  0 0 0 0 0.38  0 0 0 0.11 0"/>
+        </filter>
+      </defs>
+
+      <!-- Paillasse -->
+      <rect x="0" y="612" width="700" height="28" fill="#e6dccd"/>
+      <rect x="0" y="612" width="700" height="2" fill="#d2c4ae"/>
+
+      <!-- Cuve : arrière -->
+      <g id="tankBack" opacity="0">
+        <rect x="160" y="140" width="380" height="472" rx="6" fill="#eef6fb" stroke="#9fb7c8" stroke-width="2"/>
+      </g>
+
+      <!-- Plaque -->
+      <g id="plate" transform="translate(180,80)">
+        <g id="plateInner" style="isolation:isolate">
+          <rect x="0" y="0" width="340" height="420" rx="2" fill="url(#silica)"/>
+          <rect x="0" y="0" width="340" height="420" filter="url(#paperTex)"/>
+          <rect id="wet" x="0" y="420" width="340" height="0" fill="#bcd8ec" opacity=".35"/>
+          <line id="wetEdge" x1="0" x2="340" y1="420" y2="420" stroke="#8fb9d8" stroke-width="1.2" opacity="0"/>
+          <g id="spots"></g>
+        </g>
+        <rect x="0" y="0" width="340" height="420" fill="none" stroke="#c9c6bb" stroke-width="1"/>
+        <g id="pencilMarks" fill="none" stroke="#4a4a4a" stroke-width="1.3" stroke-linecap="round"></g>
+        <g id="labels" font-family="Inter, Arial, sans-serif" font-weight="700" font-size="13" fill="#1d1d1d" text-anchor="middle"></g>
+        <g id="annot" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="600" fill="#3b4a59"></g>
+        <text id="chromTitle" x="170" y="-20" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-weight="700" font-size="30" fill="#d01f1f" opacity="0">Chromatogramme</text>
+
+        <!-- Crayon à papier : la pointe est en (0,0) -->
+        <g id="pencil" opacity="0" transform="translate(-60,380)">
+          <g transform="rotate(-55)">
+            <polygon points="0,0 6,-2 6,2" fill="#333"/>
+            <polygon points="6,-2 16,-6 16,6 6,2" fill="#e9c99a"/>
+            <rect x="16" y="-6" width="72" height="12" fill="#f2b705"/>
+            <rect x="16" y="-6" width="72" height="4" fill="#f7cd3c"/>
+            <rect x="16" y="2" width="72" height="4" fill="#d99e00"/>
+            <rect x="88" y="-6.5" width="9" height="13" fill="#b7bcc2"/>
+            <rect x="97" y="-6" width="10" height="12" rx="2" fill="#ef8fa0"/>
+          </g>
+        </g>
+      </g>
+
+      <!-- Cuve : avant (verre, éluant, couvercle) -->
+      <g id="tankFront" opacity="0">
+        <rect x="162" y="588" width="376" height="22" fill="url(#liq)"/>
+        <line x1="162" x2="538" y1="588" y2="588" stroke="#5f9cc8" stroke-width="1.5"/>
+        <rect x="160" y="140" width="380" height="472" rx="6" fill="url(#glass)" stroke="#9fb7c8" stroke-width="2"/>
+        <text x="154" y="605" text-anchor="end" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="600" fill="#2c5f86">éluant eau / éthanol</text>
+      </g>
+      <g id="lid" opacity="0" transform="translate(420,0)">
+        <rect x="150" y="128" width="400" height="12" rx="3" fill="#cfdde7" stroke="#8aa4b6" stroke-width="1.5"/>
+        <rect x="335" y="120" width="30" height="9" rx="3" fill="#b7c9d6" stroke="#8aa4b6" stroke-width="1.2"/>
+      </g>
+      <!-- Indication pendant l'élution -->
+      <g id="eluNote" opacity="0">
+        <defs><marker id="arrowUp" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#2b6cb0"/></marker></defs>
+        <line id="eluArrow" x1="146" y1="588" x2="146" y2="588" stroke="#2b6cb0" stroke-width="4" stroke-linecap="round" marker-end="url(#arrowUp)"/>
+        
+      </g>
+      <!-- Horloge -->
+      <g id="clock" opacity="0" transform="translate(625,200)">
+        <circle r="36" fill="#fff" stroke="#3b4a59" stroke-width="3"/>
+        <rect x="-5" y="-46" width="10" height="7" rx="2" fill="#3b4a59"/>
+        <g id="clockTicks" stroke="#3b4a59" stroke-linecap="round"></g>
+        <line id="clockHour" x1="0" y1="4" x2="0" y2="-17" stroke="#3b4a59" stroke-width="3.5" stroke-linecap="round"/>
+        <line id="clockHand" x1="0" y1="6" x2="0" y2="-29" stroke="#d01f1f" stroke-width="2" stroke-linecap="round"/>
+        <circle r="3.2" fill="#d01f1f"/>
+        <text id="clockTxt" y="58" text-anchor="middle" font-family="Inter, sans-serif" font-size="13" font-weight="600" fill="#3b4a59">0 min</text>
+      </g>
+    </svg>
+  </main>
+</div>
+
+<script>
+(() => {
+  // ---------- Données ----------
+  const H = 420, W = 340;          // dimensions de la plaque (unités SVG)
+  const LINE = 380;                // ligne de dépôt (40 au-dessus du bas)
+  const FRONT_END = 40;            // position finale du front de l'éluant
+  const LIQ = 403;                 // niveau de l'éluant dans la cuve (sous la ligne de dépôt)
+  const SPAN = LINE - FRONT_END;
+  // Rapports frontaux sur papier Whatman (cellulose), éluant eau / éthanol :
+  // sur papier, le bleu patenté migre plus haut que la tartrazine.
+  // Valeurs pour Bb, Jo, Re, Rc : estimations.
+  const RF = { Bp: 0.92, Jt: 0.50, Rc: 0.68, Ra: 0.75, Re: 0.35, Bb: 0.80, Jo: 0.62 };
+  const BLUE = '#1f6fd6', YELLOW = '#f2cc00';
+  const RED = '#c8102e';
+  const COL = { Bp:BLUE, Bb:BLUE, Jt:YELLOW, Jo:YELLOW, Rc:RED, Ra:RED, Re:RED };
+  const DYES = [
+    { k:'V',  name:'Colorant vert',      drop:'#2f9e44', comps:[{c:COL.Jt, rf:RF.Jt}, {c:COL.Bp, rf:RF.Bp}] },
+    { k:'Bp', name:'Bleu patenté',       drop:COL.Bp,    comps:[{c:COL.Bp, rf:RF.Bp}] },
+    { k:'Bb', name:'Bleu brillant',      drop:COL.Bb,    comps:[{c:COL.Bb, rf:RF.Bb}] },
+    { k:'Jt', name:'Jaune de tartrazine',drop:COL.Jt,    comps:[{c:COL.Jt, rf:RF.Jt}] },
+    { k:'Jo', name:'Jaune orangé S',     drop:COL.Jo,    comps:[{c:COL.Jo, rf:RF.Jo}] },
+    { k:'Rc', name:'Rouge de cochenille',drop:COL.Rc,    comps:[{c:COL.Rc, rf:RF.Rc}] },
+    { k:'Re', name:'Érythrosine',        drop:COL.Re,    comps:[{c:COL.Re, rf:RF.Re}] },
+    { k:'Ra', name:'Azorubine',          drop:COL.Ra,    comps:[{c:COL.Ra, rf:RF.Ra}] },
+  ];
+  const CODE = { V:'V', Bp:'E131', Bb:'E133', Bm:'Bm', Jt:'E102', Jo:'E110', Jc:'E100', Rc:'E120', Re:'E127', Ra:'E122' };
+  DYES.forEach(d => d.code = CODE[d.k]);
+  const byKey = Object.fromEntries(DYES.map(d => [d.k, d]));
+
+  // ---------- Raccourcis DOM ----------
+  const $ = id => document.getElementById(id);
+  const NS = 'http://www.w3.org/2000/svg';
+  const el = (tag, attrs = {}, parent) => {
+    const n = document.createElementNS(NS, tag);
+    for (const a in attrs) n.setAttribute(a, attrs[a]);
+    if (parent) parent.appendChild(n);
+    return n;
+  };
+  const depsUl = $('deps'), plus = $('plus'), menu = $('menu');
+  const btnValidate = $('validate'), btnElute = $('elute'), btnReset = $('reset');
+  const status = $('status'), prog = $('prog');
+  const plate = $('plate'), spotsG = $('spots'), marks = $('pencilMarks'), labelsG = $('labels');
+  const pencil = $('pencil');
+  for (let i = 0; i < 12; i++) {
+    const a = i * Math.PI / 6, r1 = i % 3 ? 30 : 27;
+    el('line', { x1: r1 * Math.sin(a), y1: -r1 * Math.cos(a), x2: 33 * Math.sin(a), y2: -33 * Math.cos(a), 'stroke-width': i % 3 ? 1.2 : 2 }, $('clockTicks'));
+  }
+
+  // ---------- Animation ----------
+  let runId = 0;
+  const ease = {
+    lin: t => t,
+    io: t => t < .5 ? 2*t*t : 1 - Math.pow(-2*t + 2, 2) / 2,
+    out: t => 1 - Math.pow(1 - t, 2),
+    elu: t => 1 - Math.pow(1 - t, 1.7)
+  };
+  function tween(ms, fn, e = ease.io) {
+    const my = runId;
+    return new Promise((res, rej) => {
+      const t0 = performance.now();
+      const step = now => {
+        if (my !== runId) return rej('cancel');
+        const k = Math.min(1, (now - t0) / ms);
+        fn(e(k));
+        k < 1 ? requestAnimationFrame(step) : res();
+      };
+      requestAnimationFrame(step);
+    });
+  }
+  const wait = ms => tween(ms, () => {}, ease.lin);
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const setT = (node, x, y) => node.setAttribute('transform', `translate(${x},${y})`);
+  const getT = node => node.getAttribute('transform').match(/-?[\d.]+/g).map(Number);
+
+  async function moveTo(node, x, y, ms = 500) {
+    const [x0, y0] = getT(node);
+    await tween(ms, t => setT(node, lerp(x0, x, t), lerp(y0, y, t)));
+  }
+  function fade(node, to, ms = 400) {
+    const from = +(node.getAttribute('opacity') ?? 1);
+    return tween(ms, t => node.setAttribute('opacity', lerp(from, to, t)));
+  }
+  // Trace un segment au crayon : le crayon suit la mine
+  async function draw(x1, y1, x2, y2, ms) {
+    const len = Math.hypot(x2 - x1, y2 - y1);
+    const ln = el('line', { x1, y1, x2, y2, 'stroke-dasharray': len, 'stroke-dashoffset': len }, marks);
+    await tween(ms, t => {
+      ln.setAttribute('stroke-dashoffset', len * (1 - t));
+      setT(pencil, lerp(x1, x2, t), lerp(y1, y2, t));
+    }, ease.lin);
+    return ln;
+  }
+
+  // Capillaire neuf (tube de verre rempli de la solution à déposer)
+  function makeCapillary(color) {
+    const g = el('g', { opacity: 0, transform: 'translate(0,0)', class: 'cap' });
+    plate.insertBefore(g, pencil);
+    el('rect', { x: -2.6, y: -110, width: 5.2, height: 110, rx: 2, fill: '#eef7fd', stroke: '#8aa4b6', 'stroke-width': 1 }, g);
+    const liq = el('rect', { x: -1.5, y: -44, width: 3, height: 43, fill: color }, g);
+    return { g, liq };
+  }
+
+  // Petits flacons de colorants, rangés à gauche de la plaque (2 colonnes)
+  const VIAL_LABEL = {
+    V: ['Colorant', 'vert'], Bp: ['Bleu', 'patenté'], Bb: ['Bleu', 'brillant'], Bm: ['Bleu de', 'méthylène'],
+    Jt: ['Jaune de', 'tartrazine'], Jo: ['Jaune', 'orangé S'], Jc: ['Jaune', 'curcumine'],
+    Rc: ['Rouge de', 'cochenille'], Re: ['Érythrosine', ''], Ra: ['Azorubine', '']
+  };
+  function makeVials(keys) {
+    const g = el('g', { opacity: 0, class: 'vials' });
+    plate.insertBefore(g, pencil);
+    const pos = keys.map((k, i) => {
+      const x = i % 2 === 0 ? -148 : -55, top = 50 + Math.floor(i / 2) * 102;
+      const v = el('g', { transform: `translate(${x},${top})` }, g);
+      el('rect', { x: -15, y: 2, width: 30, height: 50, rx: 5, fill: '#eaf4fa', 'fill-opacity': .45, stroke: '#8aa4b6', 'stroke-width': 1.5 }, v);
+      el('rect', { x: -13.5, y: 22, width: 27, height: 28.5, rx: 4, fill: byKey[k].drop, opacity: .85 }, v);
+      el('rect', { x: -12, y: 22, width: 24, height: 3, fill: '#fff', opacity: .35 }, v);
+      el('rect', { x: -17, y: -2, width: 34, height: 6, rx: 2, fill: '#e6eef3', stroke: '#8aa4b6', 'stroke-width': 1.2 }, v);
+      el('rect', { x: -10, y: 8, width: 3, height: 38, rx: 1.5, fill: '#fff', opacity: .6 }, v);
+      const t = el('text', { y: 68, 'text-anchor': 'middle', 'font-family': 'Inter, Arial, sans-serif', 'font-size': 11.5, 'font-weight': 600, fill: '#2a3540' }, v);
+      const [l1, l2] = VIAL_LABEL[k];
+      [l1, (l2 ? l2 + ' ' : '') + '(' + byKey[k].code + ')'].forEach((line, j) => { const ts = el('tspan', { x: 0, dy: j ? 14 : 0 }, t); ts.textContent = line; });
+      return { x, top };
+    });
+    return { g, pos };
+  }
+
+  // ---------- État ----------
+  let lineLabel = null;
+  let deposits = [];   // clés des dépôts choisis
+  let spotData = [];   // { node, rf, x }
+
+  // ---------- Menu « Ajouter un dépôt » ----------
+  function renderMenu() {
+    menu.innerHTML = '<div class="mhead">Choisir l’espèce à déposer</div>';
+    DYES.forEach(d => {
+      const b = document.createElement('button');
+      b.innerHTML = `<span class="dot" style="background:${d.drop}"></span>${d.name} (${d.code})`;
+      b.disabled = deposits.includes(d.k);
+      b.onclick = e => { e.stopPropagation(); addDeposit(d.k); };
+      menu.appendChild(b);
+    });
+  }
+  function openMenu() { renderMenu(); menu.hidden = false; plus.style.visibility = 'hidden'; }
+  function closeMenu() { menu.hidden = true; plus.style.visibility = 'visible'; document.querySelector('.adder').style.display = deposits.length < DYES.length ? 'flex' : 'none'; }
+  plus.onclick = e => { e.stopPropagation(); openMenu(); };
+  document.addEventListener('click', e => { if (!menu.hidden && !menu.contains(e.target)) closeMenu(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !menu.hidden) closeMenu(); });
+
+  function addDeposit(k) {
+    deposits.push(k);
+    closeMenu();
+    renderDeps();
+  }
+  function renderDeps() {
+    depsUl.innerHTML = '';
+    deposits.forEach((k, i) => {
+      const d = byKey[k];
+      const li = document.createElement('li');
+      li.innerHTML = `<span class="dot" style="background:${d.drop}"></span><span class="nm">${d.name} <b>(${d.code})</b></span>`;
+      const rm = document.createElement('button');
+      rm.textContent = '×'; rm.title = 'Retirer ce dépôt';
+      rm.onclick = () => { deposits.splice(i, 1); renderDeps(); closeMenu(); };
+      li.appendChild(rm);
+      depsUl.appendChild(li);
+    });
+    btnValidate.disabled = deposits.length === 0;
+    status.textContent = deposits.length
+      ? `${deposits.length} dépôt${deposits.length > 1 ? 's' : ''} prévu${deposits.length > 1 ? 's' : ''}. Ajoute d'autres dépôts ou valide.`
+      : 'Clique sur « + » pour choisir les espèces à déposer sur la plaque.';
+  }
+
+  // ---------- Étape 1 : préparation ----------
+  btnValidate.onclick = () => prepare().catch(err => { if (err !== 'cancel') console.error(err); });
+
+  async function prepare() {
+    $('step1').classList.add('off');
+    closeMenu();
+    const n = deposits.length;
+    const xs = deposits.map((_, i) => W * (i + 1) / (n + 1));
+
+    // 1. Ligne de dépôt au crayon
+    status.textContent = 'Le crayon à papier trace la ligne de dépôt…';
+    setT(pencil, -40, LINE);
+    await fade(pencil, 1, 300);
+    await moveTo(pencil, 14, LINE, 400);
+    await draw(14, LINE, W - 14, LINE, 1300);
+    lineLabel = el('text', { x: W + 10, y: LINE + 4, opacity: 0 }, $('annot'));
+    lineLabel.textContent = '← ligne de dépôt';
+    fade(lineLabel, 1, 500).catch(() => {});
+
+    // 2. Croix + noms abrégés
+    status.textContent = 'Des croix repèrent l’emplacement de chaque dépôt.';
+    for (let i = 0; i < n; i++) {
+      const x = xs[i], s = 5;
+      await moveTo(pencil, x - s, LINE - s, 300);
+      await draw(x - s, LINE - s, x + s, LINE + s, 170);
+      await moveTo(pencil, x + s, LINE - s, 120);
+      await draw(x + s, LINE - s, x - s, LINE + s, 170);
+      // nom sous la croix
+      await moveTo(pencil, x - 8, LINE + 16, 220);
+      const txt = el('text', { x, y: LINE + 17, opacity: 0 }, labelsG);
+      txt.textContent = byKey[deposits[i]].code;
+      await tween(300, t => { txt.setAttribute('opacity', t); setT(pencil, x - 8 + 16 * t, LINE + 16 + Math.sin(t * 12) * 1.5); }, ease.lin);
+    }
+    await moveTo(pencil, W + 50, LINE - 40, 400);
+    await fade(pencil, 0, 300);
+
+    // 3. Dépôts : flacons de colorants à côté de la plaque, un capillaire neuf pour chaque espèce
+    status.textContent = 'Les flacons de colorants sont disposés à côté de la plaque.';
+    const vials = makeVials(deposits);
+    await fade(vials.g, 1, 500);
+    status.textContent = 'Un capillaire neuf prélève chaque colorant dans son flacon et en dépose une goutte sur sa croix.';
+    for (let i = 0; i < n; i++) {
+      const d = byKey[deposits[i]], x = xs[i], v = vials.pos[i];
+      const c = makeCapillary(d.drop);
+      c.liq.setAttribute('y', -1); c.liq.setAttribute('height', 0);
+      setT(c.g, v.x, v.top - 60);
+      plate.insertBefore(c.g, vials.g);          // derrière le verre du flacon : le capillaire entre dans le flacon
+      await fade(c.g, 1, 250);
+      // prélèvement dans le flacon
+      await moveTo(c.g, v.x, v.top + 46, 500);
+      await tween(500, t => { c.liq.setAttribute('y', -1 - 43 * t); c.liq.setAttribute('height', 43 * t); }, ease.out);
+      await moveTo(c.g, v.x, v.top - 60, 450);
+      plate.insertBefore(c.g, pencil);           // repasse au premier plan
+      // vers la croix
+      await moveTo(c.g, x, LINE - 60, 700);
+      await moveTo(c.g, x, LINE - 1, 350);
+      // création des taches (une par constituant, mélange soustractif)
+      const comps = d.comps.map(cc => {
+        const node = el('ellipse', { cx: x, cy: LINE, rx: 0, ry: 0, fill: cc.c, filter: 'url(#blur)', opacity: .92, style: 'mix-blend-mode:multiply' }, spotsG);
+        const s = { node, rf: cc.rf, x };
+        spotData.push(s);
+        return s;
+      });
+      await tween(450, t => {
+        comps.forEach(s => { s.node.setAttribute('rx', 7 * t); s.node.setAttribute('ry', 6.5 * t); });
+        c.liq.setAttribute('y', -44 + 8 * t); c.liq.setAttribute('height', 43 - 8 * t);
+      }, ease.out);
+      await moveTo(c.g, x, LINE - 60, 300);
+      // le capillaire usagé est jeté
+      await Promise.all([moveTo(c.g, W + 90, LINE - 160, 500), fade(c.g, 0, 500)]);
+      c.g.remove();
+    }
+    await fade(vials.g, 0, 500);
+    vials.g.remove();
+
+    status.textContent = 'Plaque prête ! Passe à l’étape 2 : l’élution.';
+    $('step2').classList.remove('off');
+    btnElute.disabled = false;
+  }
+
+  // ---------- Étape 2 : élution ----------
+  btnElute.onclick = () => elute().catch(err => { if (err !== 'cancel') console.error(err); });
+
+  async function elute() {
+    btnElute.disabled = true;
+    const tb = $('tankBack'), tf = $('tankFront'), lid = $('lid');
+    status.textContent = 'La plaque CCM est placée dans une cuve contenant l’éluant eau / éthanol.';
+    if (lineLabel) await fade(lineLabel, 0, 400);
+    await wait(1800);
+
+    await Promise.all([fade(tb, 1, 600), fade(tf, 1, 600)]);
+    await moveTo(plate, 180, 185, 1300);
+    lid.setAttribute('opacity', 1);
+    await moveTo(lid, 0, 0, 700);
+
+    // Montée de l'éluant
+    const wet = $('wet'), edge = $('wetEdge');
+    edge.setAttribute('opacity', 1);
+    const DUR = 28000;
+    const clock = $('clock'), hand = $('clockHand'), hHand = $('clockHour'), clockTxt = $('clockTxt');
+    status.textContent = 'L’éluant monte le long de la plaque par capillarité et entraîne avec lui les espèces chimiques à différentes vitesses. Les espèces chimiques qui composent les mélanges sont alors séparées.';
+    await Promise.all([fade(clock, 1, 400), fade($('eluNote'), 1, 600)]);
+    await tween(DUR, t => {
+      const f = lerp(LIQ, FRONT_END, ease.elu(t));  // position du front (ralentit en montant)
+      wet.setAttribute('y', f); wet.setAttribute('height', H - f);
+      edge.setAttribute('y1', f); edge.setAttribute('y2', f);
+      const travel = Math.max(0, LINE - f);
+      spotData.forEach(s => {
+        const dy = s.rf * travel;
+        s.node.setAttribute('cy', LINE - dy);
+        // étalement : la tache s'allonge et s'élargit au fur et à mesure qu'elle migre
+        const rx = 7 + 0.018 * dy, ry = 6.5 + 0.05 * dy;
+        s.node.setAttribute('rx', rx);
+        s.node.setAttribute('ry', ry);
+        s.node.setAttribute('opacity', 0.92 - 0.0006 * dy);
+      });
+      // horloge : la grande aiguille fait un tour par minute simulée (15 min au total)
+      $('eluArrow').setAttribute('y2', Math.min(578, 185 + f));   // la flèche suit le front de l'éluant
+      const min = 15 * t;
+      hand.setAttribute('transform', `rotate(${min * 360})`);
+      hHand.setAttribute('transform', `rotate(${min * 6})`);
+      clockTxt.textContent = `${Math.floor(min)} min`;
+      prog.style.width = (t * 100) + '%';
+    }, ease.lin);
+
+    // Fin : sortie de la plaque
+    fade(clock, 0, 800).catch(() => {});
+    fade($('eluNote'), 0, 800).catch(() => {});
+    status.textContent = '';
+    await moveTo(lid, 420, 0, 600);
+    lid.setAttribute('opacity', 0);
+    await moveTo(plate, 180, 80, 1100);
+    edge.setAttribute('opacity', .5);
+    await Promise.all([fade(tb, 0, 500), fade(tf, 0, 500), tween(800, t => wet.setAttribute('opacity', lerp(.35, .18, t)))]);
+
+    // Le crayon trace le front de l'éluant
+    setT(pencil, -40, FRONT_END);
+    await fade(pencil, 1, 250);
+    await moveTo(pencil, 6, FRONT_END, 300);
+    await draw(6, FRONT_END, W - 6, FRONT_END, 1200);
+    await moveTo(pencil, W + 60, FRONT_END - 50, 400);
+    await fade(pencil, 0, 250);
+
+    // Annotations + titre
+    const fl = el('text', { x: W + 10, y: FRONT_END + 4, opacity: 0 }, $('annot'));
+    fl.textContent = '← front de l’éluant';
+    await Promise.all([fade(fl, 1, 500), lineLabel ? fade(lineLabel, 1, 500) : null, fade($('chromTitle'), 1, 900)]);
+  }
+
+  // ---------- Réinitialisation ----------
+  btnReset.onclick = () => {
+    runId++;
+    deposits = []; spotData = [];
+    lineLabel = null; spotsG.innerHTML = ''; marks.innerHTML = ''; labelsG.innerHTML = ''; $('annot').innerHTML = '';
+    plate.querySelectorAll('.cap, .vials').forEach(n => n.remove());
+    $('eluArrow').setAttribute('y2', 588);
+    ['chromTitle', 'pencil', 'clock', 'eluNote', 'tankBack', 'tankFront', 'lid'].forEach(id => $(id).setAttribute('opacity', 0));
+    $('clockHand').setAttribute('transform', 'rotate(0)'); $('clockHour').setAttribute('transform', 'rotate(0)'); $('clockTxt').textContent = '0 min';
+    setT(plate, 180, 80); setT($('lid'), 420, 0);
+    const wet = $('wet'); wet.setAttribute('y', H); wet.setAttribute('height', 0); wet.setAttribute('opacity', .35);
+    const edge = $('wetEdge'); edge.setAttribute('y1', H); edge.setAttribute('y2', H); edge.setAttribute('opacity', 0);
+    prog.style.width = '0%';
+    $('step1').classList.remove('off'); $('step2').classList.add('off');
+    btnElute.disabled = true;
+    closeMenu(); renderDeps();
+  };
+
+  renderDeps();
+})();
+</script>
+</body>
+</html>
